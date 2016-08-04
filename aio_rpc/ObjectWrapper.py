@@ -8,9 +8,10 @@ from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
 import logging
-from functools import partial, wraps
-import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+from functools import partial
+
+#import signal
+#signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class ObjectWrapper():
                     continue
                 self.funcs[func_name] = func_caller(func, loop, timeout)
 
-    def add_executor(self, loop, executor=ProcessPoolExecutor):
+    def add_executor(self, loop, executor=ThreadPoolExecutor):
         '''Create an Executor. Default is to create a ProcessPoolExecutor.
         We only need one worker.'''
         ex = executor(max_workers=1)
