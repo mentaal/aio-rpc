@@ -1,10 +1,12 @@
-from concurrent.futures._base import TimeoutError
-#from asyncio import TimeoutError
+from asyncio import TimeoutError
 import pytest
+import time
 
 def test_basic(rpc):
+    t1 = time.time()
     rpc.loop.run_until_complete(rpc.funcs['block_10ms']())
-    assert True
+    t2 = time.time()
+    print("Delta = {} seconds".format(t2-t1))
 
 def test_except(rpc):
     with pytest.raises(TimeoutError):

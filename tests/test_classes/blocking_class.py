@@ -1,10 +1,12 @@
 from time import sleep
 class Blocking():
     def block_10ms(self):
-        print("Blocking for 10 ms..")
+        'basic test function to sleep for 10 ms'
+        #print("Blocking for 10 ms..")
+        a = 5
         sleep(0.01)
     def block(self, num):
-        print("Blocking for {} seconds".format(num))
+        #print("Blocking for {} seconds".format(num))
         sleep(num)
 
 
