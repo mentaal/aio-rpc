@@ -4,18 +4,24 @@ JSON-RPC 2.0 specification. It is not intended to be instantiated directly '''
 
     code    = -32000
     error   = 'Unspecified Error'
-    message = ''
+    details = None
 
     def __str__(self):
-        return 'Error code: {} - {} - {}'.format(self.code,
-                                                   self.error,
-                                                   self.__doc__)
-    def json_format(self):
-        return {
+        return ' - '.join(
+              filter(None, (str(self.code), self.error, super().__str__())))
+
+    def to_json_rpc_dict(self):
+        d =    {
                    'code'   : self.code,
                    'message': self.error,
-                   'data'   : '\n'.join((self.__doc__, self.message))
                }
+        if self.details is not None:
+            d['data'] = {
+                 'details'     : self.details,
+                 'explanation' : self.__doc__
+                        }
+        return d
+
 
 class ParseError(JsonRPCError):
     '''Invalid JSON was received by the server.'''
@@ -43,3 +49,7 @@ class InternalError(JsonRPCError):
     code    = -32603
     error   = 'Internal error'
 
+class UnimplementedError(JsonRPCError):
+    'Method is not implemented.'
+    code    = -32000
+    error   = 'Unimplemented error'

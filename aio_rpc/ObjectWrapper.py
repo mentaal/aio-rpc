@@ -40,11 +40,13 @@ def func_caller(func, loop, timeout):
 
 
 class ObjectWrapper():
-    '''Class to expose an instantiated object via WS and JSON. It is assumed
-    that the object is already instantiated. All methods of the class get
-    exposed except those with prefixes of _ or __. Additionally a blacklist can
-    be provided to prevent some methods from being exposed. A whitelist can
-    alternatively be provided to only expose the specified functions '''
+    '''Class to wrap an existing object such that whenever this class' methods
+    are called, the matching object's methods get called but within a different
+    thread. It is assumed that the object is already instantiated. All methods
+    of the class get exposed except those with prefixes of _ or __. Additionally
+    a blacklist can be provided to prevent some methods from being exposed. A
+    whitelist can alternatively be provided to only expose the specified
+    functions '''
 
     def __init__(self, obj, loop, whitelist=None, blacklist=None,
             executor=ThreadPoolExecutor, timeout=5):
@@ -105,7 +107,13 @@ class ObjectWrapper():
 
     def add_executor(self, loop, executor=ThreadPoolExecutor):
         '''Create an Executor. Default is to create a ProcessPoolExecutor.
-        We only need one worker.'''
+        We only need one worker.
+        args:
+            loop (asyncio eventloop): the event loop to adjust
+            executor (ThreadPoolExecutor or ProcessPoolExecutor): used to
+            execute object's methods
+        '''
+
         ex = executor(max_workers=1)
         loop.set_default_executor(ex)
 

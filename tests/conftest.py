@@ -2,6 +2,7 @@ import pytest
 import asyncio
 from aio_rpc.ObjectWrapper import ObjectWrapper
 from test_classes.blocking_class import Blocking
+from aio_rpc.JsonRPCWrapper import JsonRPCABC
 
 @pytest.fixture(scope='module')
 def rpc():
@@ -9,3 +10,6 @@ def rpc():
     loop = asyncio.get_event_loop()
     return ObjectWrapper(b,loop, timeout=0.1)
 
+@pytest.fixture(scope='module')
+def json_abc():
+    return JsonRPCABC()
