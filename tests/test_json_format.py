@@ -115,5 +115,22 @@ def test_exception_responses(json_abc):
                 'id'      : 'Null',
                 'error'  : exc.to_json_rpc_dict()}
 
+def test_process_incoming_parse_error(json_abc):
+
+    r = json_abc.process_incoming('{"malformed":"json"')
+    response_dict = json.loads(r)
+    expected_subset = {
+            'jsonrpc' : '2.0',
+            'id'      : 'Null',
+            }
+    expected_error = {
+                'code' : -32700,
+                'message' : 'Parse Error' }
+
+    assert expected_subset.items() <= response_dict.items()
+    assert response_dict.get('error') is not None
+    assert expected_error.items() <= response_dict['error'].items()
+
+
 
 
