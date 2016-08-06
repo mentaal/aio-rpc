@@ -8,16 +8,16 @@ jar = aiohttp.CookieJar(unsafe=True)
 
 async def blah():
     async with aiohttp.ClientSession(cookie_jar=jar) as session:
-        for i in range(2):
-            async with session.get('http://localhost:8080/') as resp:
-                #print(resp.status)
-                print(await resp.text())
-                #print(session.cookies)
-                #cookie = session.cookies
-                #print(jar._cookies)
+        async with session.get('http://localhost:8080/') as resp:
+            #print(resp.status)
+            print(await resp.text())
+            #print(session.cookies)
+            #cookie = session.cookies
+            #print(jar._cookies)
 
-            async with session.ws_connect('http://localhost:8080/ws') as ws:
+        async with session.ws_connect('http://localhost:8080/ws') as ws:
 
+            for i in range(2):
                 for i in range(10):
                     ws.send_str('blah blah blah...')
 
@@ -34,6 +34,9 @@ async def blah():
                         break
                     elif msg.tp == aiohttp.MsgType.error:
                         break
+
+                #await asyncio.sleep(5)
+                print(session.cookies)
                 #print(session.cookies['AIOHTTP_SESSION'])
                 #last_visit = session.cookies['AIOHTTP_SESSION'].get(
                 #        'last_visit', 'Never')

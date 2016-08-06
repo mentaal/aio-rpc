@@ -58,7 +58,7 @@ class JsonRPCABC():
                         }
         return json.dumps(response_dict)
 
-    def response_error(self, exception):
+    def response_error(self, exception, id_num='null'):
         '''create an error response object based on the given arguments
         Args:
             exception (JsonRPCError): an exception with the necessary
@@ -70,7 +70,7 @@ class JsonRPCABC():
         response_dict = {
                 'jsonrpc' : '2.0',
                 'error'   : exception.to_json_rpc_dict(),
-                'id'      : 'Null'
+                'id'      : id_num
                         }
         return json.dumps(response_dict)
 
@@ -82,9 +82,21 @@ class JsonRPCABC():
         function when implementing a client.
 
         Args:
-            request (dict): a dictionary containing the request to service'''
+            request (dict): a dictionary containing the request to service
+
+        Returns:
+            response_object: the pre-jsonified response
+        '''
 
         raise UnimplementedError()
+
+    def process_notification(self, notification):
+        '''Process a notification object. Similar to a request but don't respond
+        with anything
+        Args:
+            notification (a json object):the decoded notification from the
+            client
+        '''
 
     def process_response(self, response):
         '''Received JSON indicates a response object. A server would not need to
@@ -103,9 +115,40 @@ class JsonRPCABC():
         try:
             result = json.loads(json_obj)
         except ValueError as e:
-            p = ParseError()
-            p.details = e.__str__()
+            p = ParseError(e.__str__())
             return self.response_error(p)
+
+        #now parse it for legitimacy
+        if type(result) == list:
+            if len(result) == 0:
+                i = InvalidRequestError('Sent an empty batch')
+                return self.response_error(i)
+            else:
+                #process a batch
+                raise UnimplementedError('Fixme - handle a batch!')
+
+        if ('jsonrpc','2.0') not in result.items():
+            i = InvalidRequestError('Missing or invalid rpc spec information')
+            return self.response_error(i)
+
+        if 'method' in result:
+            method_arg = result['method']
+            #it's a request
+            if type(method_arg) == int or (type(method_arg) == str and
+                    method_arg[:1].isdigit()):
+                i = InvalidRequestError(
+                        'method cannot be empty or start with a number')
+                return self.response_error(i)
+            if 'id' not in result: #it's a notification
+                return self.process_notification(result)
+            else:
+                return self.process_request(result)
+        elif 'result' in result:
+            if 'id' not in result:
+                i = InvalidRequestError('Missing ID in result')
+                return self.response_error(i)
+
+            return self.process_response(result)
 
 
 

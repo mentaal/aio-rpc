@@ -18,6 +18,7 @@ async def handler(request):
         message = 'Welcome back, last visited: {} secs ago'.format(time.time() -
                 last_visit)
     session['last_visit'] = time.time()
+    session['authenticated'] = 'True'
 
     return web.Response(body=message.encode('utf-8'))
 
@@ -26,10 +27,12 @@ async def ws_handler(request):
     session = await get_session(request)
 
     #print(session.get('last_visit'))
+    session['test_update_cookie'] = 'updated'
 
     ws = web.WebSocketResponse()
 
     await ws.prepare(request)
+
 
     async for msg in ws:
         if msg.tp == aiohttp.MsgType.text:
@@ -41,14 +44,16 @@ async def ws_handler(request):
             print('ws connection closed with exception %s' %
                   ws.exception())
 
+
+
     print('websocket connection closed')
 
     return ws
 
 async def init(loop):
     app = web.Application()
-    #setup(app, SimpleCookieStorage())
-    setup(app, EncryptedCookieStorage(b'Thirty  two  length  bytes  key.'))
+    setup(app, SimpleCookieStorage())
+    #setup(app, EncryptedCookieStorage(b'Thirty  two  length  bytes  key.'))
     app.router.add_route('GET', '/', handler)
     app.router.add_route('GET', '/ws', ws_handler)
     srv = await loop.create_server(

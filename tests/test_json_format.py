@@ -89,7 +89,7 @@ def test_response_error_parse_error(json_abc):
 
     assert response_dict == {
             'jsonrpc' : '2.0',
-            'id'      : 'Null',
+            'id'      : 'null',
             'error'  : {
                 'code' : -32700,
                 'message' : 'Parse Error',
@@ -114,7 +114,7 @@ def test_exception_responses(json_abc):
 
         assert response_dict == {
                 'jsonrpc' : '2.0',
-                'id'      : 'Null',
+                'id'      : 'null',
                 'error'  : exc.to_json_rpc_dict()}
 
 def test_process_incoming_parse_error(json_abc):
@@ -123,7 +123,7 @@ def test_process_incoming_parse_error(json_abc):
     response_dict = json.loads(r)
     expected_subset = {
             'jsonrpc' : '2.0',
-            'id'      : 'Null',
+            'id'      : 'null',
             }
     expected_error = {
                 'code' : -32700,
@@ -133,6 +133,27 @@ def test_process_incoming_parse_error(json_abc):
     assert response_dict.get('error') is not None
     assert expected_error.items() <= response_dict['error'].items()
 
+    #print(response_dict)
 
+def test_process_incoming_invalid_request(json_abc):
 
+    request = json_abc.request('1_req', positional_params=[1,2,3], id_num=4)
+
+    r = json_abc.process_incoming(request)
+    expected_e = InvalidRequestError(
+            'method cannot be empty or start with a number')
+
+    assert json_abc.response_error(expected_e) == r
+
+def test_process_incoming_missing_id(json_abc):
+
+    response = json_abc.response_result(result=5, id_num=4)
+    response_obj = json.loads(response)
+    response_obj.pop('id')
+    response = json.dumps(response_obj)
+
+    r = json_abc.process_incoming(response)
+    expected_e = InvalidRequestError('Missing ID in result')
+
+    assert json_abc.response_error(expected_e) == r
 
