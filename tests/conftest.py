@@ -3,7 +3,7 @@ import asyncio
 from aio_rpc.ObjectWrapper import ObjectWrapper
 from aio_rpc.Wrapper import Wrapper
 from test_classes.blocking_class import Blocking
-from aio_rpc.JsonRPCWrapper import JsonRPCABC
+from aio_rpc.JsonRPCABC import JsonRPCABC
 
 @pytest.fixture(scope='module')
 def rpc():

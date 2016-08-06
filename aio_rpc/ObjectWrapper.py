@@ -1,16 +1,16 @@
 import asyncio
 import time
-import inspect
+from inspect import getmembers, signature,ismethod
 from aiohttp import web
 from aiohttp_session import get_session, setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
-# This restores the default Ctrl+C signal handler, which just kills the process
 from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import ProcessPoolExecutor
+#from concurrent.futures import ProcessPoolExecutor
 import logging
 from functools import partial
 
 #import signal
+# This restores the default Ctrl+C signal handler, which just kills the process
 #signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,6 @@ class ObjectWrapper():
 
     def __init__(self, *, obj, loop, whitelist=None, blacklist=None,
             executor=ThreadPoolExecutor, timeout=5):
-            #executor=ThreadPoolExecutor, timeout=5):
         '''Initialize what methods are exposed. Also intialize an executor to
         run the object's methods in. THis is because they could be blocking and
         calling these directly would drastically affect the reactivity of the
@@ -86,24 +85,28 @@ class ObjectWrapper():
 
         self.__add_executor(loop, executor=executor)
 
-        obj_methods = inspect.getmembers(obj, inspect.ismethod)
+        obj_methods = getmembers(obj, ismethod)
 
         self.funcs = {}
+        self.func_sigs = {}
 
         if whitelist is not None:
             for func_name,func in obj_methods:
                 if func_name in whitelist:
                     self.funcs[func_name] = func_caller(func, loop, timeout)
+                    self.func_sigs[func_name] = signature(func)
         elif blacklist is not None:
             for func_name,func in obj_methods:
                 if func_name in blacklist or func_name[0] == '_':
                     continue
                 self.funcs[func_name] = func_caller(func, loop, timeout)
+                self.func_sigs[func_name] = signature(func)
         else:
             for func_name,func in obj_methods:
                 if func_name[0] == '_':
                     continue
                 self.funcs[func_name] = func_caller(func, loop, timeout)
+                self.func_sigs[func_name] = signature(func)
 
     def __add_executor(self, loop, executor=ThreadPoolExecutor):
         '''Create an Executor. Default is to create a ProcessPoolExecutor.

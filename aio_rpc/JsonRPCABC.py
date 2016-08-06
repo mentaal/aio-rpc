@@ -1,6 +1,5 @@
 import json
-from .Exceptions import UnimplementedError
-from aio_rpc.Exceptions import (
+from .Exceptions import (
         ParseError,
         InvalidRequestError,
         NotFoundError,
@@ -12,6 +11,7 @@ class JsonRPCABC():
     '''Abstract Base Class defining generic functions relating to JSON-RPC 2.0.
     The referenced specification is available here:
     http://www.jsonrpc.org/specification.'''
+
 
     _id = 0
 
@@ -151,9 +151,3 @@ class JsonRPCABC():
             return self.process_response(result)
 
 
-
-class JsonRPCClient(JsonRPCABC):
-    pass
-
-class JsonRPCServer(JsonRPCABC):
-    pass
