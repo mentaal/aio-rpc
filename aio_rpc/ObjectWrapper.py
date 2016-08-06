@@ -117,3 +117,12 @@ class ObjectWrapper():
         ex = executor(max_workers=1)
         loop.set_default_executor(ex)
 
+    def __getattr__(self, item):
+        #return self.funcs[item] #implicitly raise an KeyError if not found
+
+        if item in self.funcs:
+            return self.funcs[item]
+        else:
+            raise AttributeError(
+                "'{}' object has no attribute '{}'".format(type(self), item))
+
