@@ -92,8 +92,10 @@ def test_response_error_parse_error(json_abc):
             'id'      : 'Null',
             'error'  : {
                 'code' : -32700,
-                'message' : 'Parse Error'
-                }}
+                'message' : 'Parse Error',
+                'data' : {
+                    'explanation' : parse_error_exception.__doc__,
+                    'details'     : "invalid json: 'blah!$'" } }}
 
 
 def test_exception_responses(json_abc):

@@ -4,22 +4,21 @@ JSON-RPC 2.0 specification. It is not intended to be instantiated directly '''
 
     code    = -32000
     error   = 'Unspecified Error'
-    details = None
 
     def __str__(self):
         return ' - '.join(
               filter(None, (str(self.code), self.error, super().__str__())))
 
     def to_json_rpc_dict(self):
+        arg = super().__str__()
+        #only add details (the argument to the exception) if it exists
         d =    {
                    'code'   : self.code,
                    'message': self.error,
+                   'data'   : {a:b for a,b in
+           (('explanation',self.__doc__),('details',arg)) if b }
                }
-        if self.details is not None:
-            d['data'] = {
-                 'details'     : self.details,
-                 'explanation' : self.__doc__
-                        }
+
         return d
 
 
