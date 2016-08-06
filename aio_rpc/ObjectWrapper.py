@@ -48,7 +48,7 @@ class ObjectWrapper():
     whitelist can alternatively be provided to only expose the specified
     functions '''
 
-    def __init__(self, obj, loop, whitelist=None, blacklist=None,
+    def __init__(self, *, obj, loop, whitelist=None, blacklist=None,
             executor=ThreadPoolExecutor, timeout=5):
             #executor=ThreadPoolExecutor, timeout=5):
         '''Initialize what methods are exposed. Also intialize an executor to
@@ -84,7 +84,7 @@ class ObjectWrapper():
         self._obj = obj
         self.loop = loop
 
-        self.add_executor(loop, executor=executor)
+        self.__add_executor(loop, executor=executor)
 
         obj_methods = inspect.getmembers(obj, inspect.ismethod)
 
@@ -105,7 +105,7 @@ class ObjectWrapper():
                     continue
                 self.funcs[func_name] = func_caller(func, loop, timeout)
 
-    def add_executor(self, loop, executor=ThreadPoolExecutor):
+    def __add_executor(self, loop, executor=ThreadPoolExecutor):
         '''Create an Executor. Default is to create a ProcessPoolExecutor.
         We only need one worker.
         args:

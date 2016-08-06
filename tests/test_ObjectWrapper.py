@@ -11,3 +11,10 @@ def test_basic(rpc):
 def test_except(rpc):
     with pytest.raises(TimeoutError):
         rpc.loop.run_until_complete(rpc.funcs['block'](2))
+
+def test_function_lookup(rpc):
+    rpc.loop.run_until_complete(rpc.block_10ms())
+
+def test_except(rpc):
+    with pytest.raises(AttributeError):
+        rpc.loop.run_until_complete(rpc.undefined_func())
