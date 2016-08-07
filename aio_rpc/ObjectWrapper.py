@@ -81,32 +81,32 @@ class ObjectWrapper():
         '''
 
         self._obj = obj
-        self.loop = loop
+        self._loop = loop
 
         self.__add_executor(loop, executor=executor)
 
         obj_methods = getmembers(obj, ismethod)
 
-        self.funcs = {}
-        self.func_sigs = {}
+        self._funcs = {}
+        self._func_sigs = {}
 
         if whitelist is not None:
             for func_name,func in obj_methods:
                 if func_name in whitelist:
-                    self.funcs[func_name] = func_caller(func, loop, timeout)
-                    self.func_sigs[func_name] = signature(func)
+                    self._funcs[func_name] = func_caller(func, loop, timeout)
+                    self._func_sigs[func_name] = signature(func)
         elif blacklist is not None:
             for func_name,func in obj_methods:
                 if func_name in blacklist or func_name[0] == '_':
                     continue
-                self.funcs[func_name] = func_caller(func, loop, timeout)
-                self.func_sigs[func_name] = signature(func)
+                self._funcs[func_name] = func_caller(func, loop, timeout)
+                self._func_sigs[func_name] = signature(func)
         else:
             for func_name,func in obj_methods:
                 if func_name[0] == '_':
                     continue
-                self.funcs[func_name] = func_caller(func, loop, timeout)
-                self.func_sigs[func_name] = signature(func)
+                self._funcs[func_name] = func_caller(func, loop, timeout)
+                self._func_sigs[func_name] = signature(func)
 
     def __add_executor(self, loop, executor=ThreadPoolExecutor):
         '''Create an Executor. Default is to create a ProcessPoolExecutor.
@@ -121,10 +121,10 @@ class ObjectWrapper():
         loop.set_default_executor(ex)
 
     def __getattr__(self, item):
-        #return self.funcs[item] #implicitly raise an KeyError if not found
+        #return self._funcs[item] #implicitly raise an KeyError if not found
 
-        if item in self.funcs:
-            return self.funcs[item]
+        if item in self._funcs:
+            return self._funcs[item]
         else:
             raise AttributeError(
                 "'{}' object has no attribute '{}'".format(type(self), item))

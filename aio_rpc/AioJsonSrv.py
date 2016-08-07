@@ -1,3 +1,4 @@
+from functools import partial
 from .JsonRPCABC import JsonRPCABC
 from .Exceptions import (
         ParseError,
@@ -36,14 +37,14 @@ class AioJsonSrv(JsonRPCABC):
         params = request.get('params', None)
         if params:
             if type(params) == list:
-                p      = partial(method *params)
-                p_test = partial(self.obj.func_sigs[method_name].bind, *params)
+                p      = partial(method, *params)
+                p_test = partial(self.obj._func_sigs[method_name].bind, *params)
             else:
-                p      = partial(method **params)
-                p_test = partial(self.obj.func_sigs[method_name].bind, **params)
+                p      = partial(method, **params)
+                p_test = partial(self.obj._func_sigs[method_name].bind, **params)
         else:
                 p      = method
-                p_test = self.obj.func_sigs[method_name].bind
+                p_test = self.obj._func_sigs[method_name].bind
 
         try:
             p_test()
@@ -52,7 +53,7 @@ class AioJsonSrv(JsonRPCABC):
             return self.response_error(r, id_num=request['id'])
 
         try:
-            p()
+            return await p()
         except Exception as e:
             r = InternalError(e.__str__())
             return self.response_error(r, id_num=request['id'])

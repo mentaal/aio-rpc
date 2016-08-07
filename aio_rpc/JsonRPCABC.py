@@ -74,7 +74,7 @@ class JsonRPCABC():
                         }
         return json.dumps(response_dict)
 
-    def process_request(self, request):
+    async def process_request(self, request):
         '''Received JSON indicates a request object. A server would need to
         cater for this function. A client wouldn't need to implement this.
         There is a possibility that an implementation of this class could
@@ -90,7 +90,7 @@ class JsonRPCABC():
 
         raise UnimplementedError()
 
-    def process_notification(self, notification):
+    async def process_notification(self, notification):
         '''Process a notification object. Similar to a request but don't respond
         with anything
         Args:
@@ -98,7 +98,7 @@ class JsonRPCABC():
             client
         '''
 
-    def process_response(self, response):
+    async def process_response(self, response):
         '''Received JSON indicates a response object. A server would not need to
         cater for this function. A client would need to implement this.
         There is a possibility that an implementation of this class could
@@ -107,7 +107,7 @@ class JsonRPCABC():
 
         raise UnimplementedError()
 
-    def process_incoming(self, json_obj:str) -> str:
+    async def process_incoming(self, json_obj:str) -> str:
         '''Process an incoming (either to a client or server) string. This
         function is always expected to return some form of string which can be
         sent to the sender in a jsonified string.'''
@@ -140,14 +140,14 @@ class JsonRPCABC():
                         'method cannot be empty or start with a number')
                 return self.response_error(i)
             if 'id' not in result: #it's a notification
-                return self.process_notification(result)
+                return await self.process_notification(result)
             else:
-                return self.process_request(result)
+                return await self.process_request(result)
         elif 'result' in result:
             if 'id' not in result:
                 i = InvalidRequestError('Missing ID in result')
                 return self.response_error(i)
 
-            return self.process_response(result)
+            return await self.process_response(result)
 
 

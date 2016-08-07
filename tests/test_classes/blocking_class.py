@@ -8,5 +8,8 @@ class Blocking():
     def block(self, num):
         #print("Blocking for {} seconds".format(num))
         sleep(num)
+    def add(self, num1, num2):
+        #print("Blocking for {} seconds".format(num))
+        return num1+num2
 
 

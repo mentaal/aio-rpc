@@ -1,4 +1,5 @@
 import json
+import pytest
 import aio_rpc.Exceptions as Exceptions
 from aio_rpc.Exceptions import (
         ParseError,
@@ -117,9 +118,10 @@ def test_exception_responses(json_abc):
                 'id'      : 'null',
                 'error'  : exc.to_json_rpc_dict()}
 
-def test_process_incoming_parse_error(json_abc):
+@pytest.mark.asyncio
+async def test_process_incoming_parse_error(json_abc):
 
-    r = json_abc.process_incoming('{"malformed":"json"')
+    r = await json_abc.process_incoming('{"malformed":"json"')
     response_dict = json.loads(r)
     expected_subset = {
             'jsonrpc' : '2.0',
@@ -135,25 +137,29 @@ def test_process_incoming_parse_error(json_abc):
 
     #print(response_dict)
 
-def test_process_incoming_invalid_request(json_abc):
+@pytest.mark.asyncio
+async def test_process_incoming_invalid_request(json_abc):
 
     request = json_abc.request('1_req', positional_params=[1,2,3], id_num=4)
 
-    r = json_abc.process_incoming(request)
+    r = await json_abc.process_incoming(request)
     expected_e = InvalidRequestError(
             'method cannot be empty or start with a number')
 
     assert json_abc.response_error(expected_e) == r
 
-def test_process_incoming_missing_id(json_abc):
+@pytest.mark.asyncio
+async def test_process_incoming_missing_id(json_abc):
 
     response = json_abc.response_result(result=5, id_num=4)
     response_obj = json.loads(response)
     response_obj.pop('id')
     response = json.dumps(response_obj)
 
-    r = json_abc.process_incoming(response)
+    r = await json_abc.process_incoming(response)
     expected_e = InvalidRequestError('Missing ID in result')
 
-    assert json_abc.response_error(expected_e) == r
+    result = json_abc.response_error(expected_e)
+
+    assert  result == r
 
