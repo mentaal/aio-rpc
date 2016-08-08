@@ -12,4 +12,6 @@ class Blocking():
         #print("Blocking for {} seconds".format(num))
         return num1+num2
 
+    def raise_exception(self):
+        return 1/0
 

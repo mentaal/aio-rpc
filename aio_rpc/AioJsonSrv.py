@@ -8,6 +8,7 @@ from .Exceptions import (
         InternalError,
         UnimplementedError)
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class AioJsonSrv(JsonRPCABC):
     async def process_request(self, request):
 
         method_name = request['method']
+        id_num = request['id']
 
         try:
             method = getattr(self.obj, method_name)
@@ -53,7 +55,10 @@ class AioJsonSrv(JsonRPCABC):
             return self.response_error(r, id_num=request['id'])
 
         try:
-            return await p()
+            result = await p()
+            result_prepared = self.response_result(id_num=id_num, result=result)
+            return result_prepared
+
         except Exception as e:
             r = InternalError(e.__str__())
             return self.response_error(r, id_num=request['id'])

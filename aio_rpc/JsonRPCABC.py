@@ -42,7 +42,8 @@ class JsonRPCABC():
 
         return json.dumps(request_dict)
 
-    def response_result(self, id_num:int, result):
+    @staticmethod
+    def response_result(id_num:int, result):
         '''create an result response object based on the given arguments
         Args:
             id_num (int): the id of the response
@@ -58,7 +59,8 @@ class JsonRPCABC():
                         }
         return json.dumps(response_dict)
 
-    def response_error(self, exception, id_num='null'):
+    @staticmethod
+    def response_error(exception, id_num='null'):
         '''create an error response object based on the given arguments
         Args:
             exception (JsonRPCError): an exception with the necessary
