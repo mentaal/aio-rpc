@@ -37,7 +37,7 @@ class ClientObj():
         self._future_dict[id_num] = f
 
         #now await for the result
-        print("Now awaiting for result..")
+        #print("Now awaiting for result..")
         return await f
 
 

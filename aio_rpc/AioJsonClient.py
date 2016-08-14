@@ -42,13 +42,13 @@ class AioJsonClient(JsonRPCABC):
     def process_error(self, result:dict):
         id_num = result.get('id', None)
         if id_num is not None:
-            f = self.future_dict[id_num]
+            f = self.future_dict.pop(id_num)
             exc = self.exception_from_json_dict(result['error'])
             f.set_exception(exc)
+            return None, None
         else:
             exc = self.exception_from_json_dict(result['error'])
-            raise(exc)
-        return None, exc
+            return None, exc
 
 
     def process_response(self, response):
@@ -61,7 +61,6 @@ class AioJsonClient(JsonRPCABC):
         else:
             raise(InternalError('Received RPC response with an invalid ID'))
 
-        print("Finished process_response..")
         return response, None #not much use for this just yet
 
 
