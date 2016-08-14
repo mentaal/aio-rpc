@@ -52,3 +52,12 @@ class UnimplementedError(JsonRPCError):
     'Method is not implemented.'
     code    = -32000
     error   = 'Unimplemented error'
+
+exceptions_from_codes = {
+        JsonRPCError.code : JsonRPCError,
+        ParseError.code : ParseError,
+        InvalidRequestError.code : InvalidRequestError,
+        NotFoundError.code       : NotFoundError,
+        InvalidParamsError.code  : InvalidParamsError,
+        InternalError.code       : InternalError,
+        UnimplementedError.code  : UnimplementedError }

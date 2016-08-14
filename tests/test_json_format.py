@@ -121,7 +121,7 @@ def test_exception_responses(json_abc):
 @pytest.mark.asyncio
 async def test_process_incoming_parse_error(json_abc):
 
-    r = await json_abc.process_incoming('{"malformed":"json"')
+    r,e = await json_abc.process_incoming('{"malformed":"json"')
     response_dict = json.loads(r)
     expected_subset = {
             'jsonrpc' : '2.0',
@@ -142,11 +142,11 @@ async def test_process_incoming_invalid_request(json_abc):
 
     request,id_num = json_abc.request('1_req', positional_params=[1,2,3], id_num=4)
 
-    r = await json_abc.process_incoming(request)
+    r,e = await json_abc.process_incoming(request)
     expected_e = InvalidRequestError(
-            'method cannot be empty or start with a number')
+            'method cannot start with a number')
 
-    assert json_abc.response_error(expected_e) == r
+    assert json_abc.response_error(expected_e, id_num=id_num) == r
 
 @pytest.mark.asyncio
 async def test_process_incoming_missing_id(json_abc):
@@ -156,7 +156,7 @@ async def test_process_incoming_missing_id(json_abc):
     response_obj.pop('id')
     response = json.dumps(response_obj)
 
-    r = await json_abc.process_incoming(response)
+    r,e = await json_abc.process_incoming(response)
     expected_e = InvalidRequestError('Missing ID in result')
 
     result = json_abc.response_error(expected_e)

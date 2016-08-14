@@ -5,14 +5,12 @@ class ClientObj():
     '''Proxy object for object being served. User will attempt attribute access
     on this object'''
 
-    def __init__(self, event_loop, q):
+    def __init__(self, event_loop, q, json_client):
         '''safe event_loop and queue objects'''
         self._event_loop = event_loop
         self._q = q
-        self._future_dict = {}
-        self._json_client = AioJsonClient(
-                event_loop=self._event_loop,
-                future_dict=self.future_dict)
+        self._json_client = json_client
+        self._future_dict = json_client.future_dict
 
 
     def __getattr__(self, item):
@@ -39,6 +37,7 @@ class ClientObj():
         self._future_dict[id_num] = f
 
         #now await for the result
+        print("Now awaiting for result..")
         return await f
 
 

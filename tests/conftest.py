@@ -30,36 +30,36 @@ def srv(event_loop):
 
 
 @pytest.fixture()
-def client_mocked(event_loop):
+def json_client(event_loop):
+    future_dict = {}
+    json_client = AioJsonClient( event_loop=event_loop, future_dict=future_dict)
+    return json_client
+
+@pytest.fixture()
+def client_mocked(event_loop, json_client):
     q = asyncio.Queue(maxsize=5, loop=event_loop)
-    c = ClientObj(event_loop=event_loop, q=q)
-    future_dict = c._future_dict
-    async def answerer(q, future_dict=future_dict):
+    c = ClientObj(event_loop=event_loop, q=q, json_client=json_client)
+    async def answerer(q, future_dict):
         request_json = await q.get()
         request_dict = json.loads(request_json)
         id_num = request_dict['id']
         f = future_dict[id_num]
         f.set_result(42)
-    asyncio.ensure_future(answerer(q,future_dict),loop=event_loop)
+    asyncio.ensure_future(answerer(q,json_client.future_dict),loop=event_loop)
 
 
     return c
 
 @pytest.fixture()
-def client_srv_answerer(event_loop, srv):
+def client_srv_answerer(event_loop, json_client, srv):
     q = asyncio.Queue(maxsize=5, loop=event_loop)
-    c = ClientObj(event_loop=event_loop, q=q)
-    future_dict = c._future_dict
-    async def answerer(q, future_dict=future_dict, srv=srv):
+    c = ClientObj(event_loop=event_loop, q=q, json_client=json_client)
+    async def answerer(q, srv, client_obj, json_client):
         request_json = await q.get()
-        print("eh?")
-        result_json = await srv.process_incoming(request_json)
+        result_json,e = await srv.process_incoming(request_json)
+        r = await json_client.process_incoming(result_json)
 
-        result_dict = json.loads(result_json)
-        id_num = result_dict['id']
-        f = future_dict[id_num]
-        f.set_result(result_dict['result'])
-    asyncio.ensure_future(answerer(q,future_dict, srv),loop=event_loop)
+    asyncio.ensure_future(answerer(q,srv,c, json_client),loop=event_loop)
 
 
     return c

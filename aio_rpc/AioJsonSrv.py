@@ -33,7 +33,7 @@ class AioJsonSrv(JsonRPCABC):
             method = getattr(self.obj, method_name)
         except AttributeError as e:
             r = NotFoundError(e.__str__())
-            return self.response_error(r, id_num=request['id'])
+            return self.response_error(r, id_num=request['id']), r
 
 
         params = request.get('params', None)
@@ -52,15 +52,15 @@ class AioJsonSrv(JsonRPCABC):
             p_test()
         except TypeError as e:
             r = InvalidParamsError(e.__str__())
-            return self.response_error(r, id_num=request['id'])
+            return self.response_error(r, id_num=request['id']), r
 
         try:
             result = await p()
             result_prepared = self.response_result(id_num=id_num, result=result)
-            return result_prepared
+            return result_prepared, None
 
         except Exception as e:
             r = InternalError(e.__str__())
-            return self.response_error(r, id_num=request['id'])
+            return self.response_error(r, id_num=request['id']), r
             logger.error(e)
 

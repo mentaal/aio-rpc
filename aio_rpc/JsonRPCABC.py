@@ -1,11 +1,13 @@
 import json
 from .Exceptions import (
+        JsonRPCError,
         ParseError,
         InvalidRequestError,
         NotFoundError,
         InvalidParamsError,
         InternalError,
-        UnimplementedError)
+        UnimplementedError,
+        exceptions_from_codes)
 
 class JsonRPCABC():
     '''Abstract Base Class defining generic functions relating to JSON-RPC 2.0.
@@ -109,6 +111,25 @@ class JsonRPCABC():
 
         raise UnimplementedError()
 
+    def process_error(self, json_dict:dict):
+        raise UnimplementedError()
+
+    def exception_from_json_dict(self, json_dict:dict)->Exception:
+        '''create an exception from a json error dict'''
+        #first get error_dict
+        code = json_dict.get('code')
+        data = json_dict.get('data')
+        if data is not None:
+            details = data.get('details')
+        else:
+            details = ''
+        
+        if code is not None:
+            exc = exceptions_from_codes[code](details)
+        else:
+            exc = JsonRPCError(details)
+        return exc
+
     async def process_incoming(self, json_obj:str) -> str:
         '''Process an incoming (either to a client or server) string. This
         function is always expected to return some form of string which can be
@@ -118,45 +139,55 @@ class JsonRPCABC():
             result = json.loads(json_obj)
         except ValueError as e:
             p = ParseError(e.__str__())
-            return self.response_error(p)
+            return self.response_error(p), p
 
         #now parse it for legitimacy
         if type(result) == list:
             if len(result) == 0:
                 i = InvalidRequestError('Sent an empty batch')
-                return self.response_error(i)
+                return self.response_error(i), i
             else:
                 #process a batch
                 raise UnimplementedError('Fixme - handle a batch!')
 
         if ('jsonrpc','2.0') not in result.items():
             i = InvalidRequestError('Missing or invalid rpc spec information')
-            return self.response_error(i)
+            return self.response_error(i), i
 
         if 'method' in result:
             method_arg = result['method']
             #it's a request
-            if type(method_arg) == int or (type(method_arg) == str and
-                    method_arg[:1].isdigit()):
-                i = InvalidRequestError(
-                        'method cannot be empty or start with a number')
-                return self.response_error(i)
             if 'id' not in result: #it's a notification
                 return await self.process_notification(result)
+            id_num = result['id']
+            if type(id_num) != int:
+                i = InvalidRequestError( 'id in request must be an integer')
+                return self.response_error(i), i
+            if type(method_arg) == int:
+                i = InvalidRequestError( 'method cannot be a number')
+                return self.response_error(i, id_num=id_num), i
+            if type(method_arg) != str:
+                i = InvalidRequestError( 'method name has to be a string')
+                return self.response_error(i, id_num=id_num), i
+            if len(method_arg) == 0:
+                i = InvalidRequestError( 'method cannot be empty')
+                return self.response_error(i, id_num=id_num), i
+            if method_arg[:1].isdigit():
+                i = InvalidRequestError( 'method cannot start with a number')
+                return self.response_error(i, id_num=id_num), i
             else:
                 return await self.process_request(result)
         elif 'result' in result:
             if 'id' not in result:
                 i = InvalidRequestError('Missing ID in result')
-                return self.response_error(i)
+                return self.response_error(i), i
             if 'error' in result:
                 i = InvalidRequestError(
                         'Result contains a result and an error field')
-                return self.response_error(i)
+                return self.response_error(i), i
 
-            return await self.process_response(result)
+            return self.process_response(result)
         elif 'error' in result:
-            pass
-            #TODO - finish this
+            return self.process_error(result)
 
 

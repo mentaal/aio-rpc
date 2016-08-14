@@ -9,6 +9,7 @@ from .Exceptions import (
         UnimplementedError)
 import logging
 import json
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +30,38 @@ class AioJsonClient(JsonRPCABC):
         self.loop = event_loop
         self.future_dict = future_dict
 
+    async def process_incoming(self, json_obj:str):
+        '''subclass to raise an exception if result is an error'''
+        response, exception = await super().process_incoming(json_obj)
+        #exception will be raised at the caller via the future
+        #this should probably still be here in case the future id is not found
+        if exception:
+            raise exception
+        return response
+
+    def process_error(self, result:dict):
+        id_num = result.get('id', None)
+        if id_num is not None:
+            f = self.future_dict[id_num]
+            exc = self.exception_from_json_dict(result['error'])
+            f.set_exception(exc)
+        else:
+            exc = self.exception_from_json_dict(result['error'])
+            raise(exc)
+        return None, exc
+
+
     def process_response(self, response):
         '''correlate response with stored requests/futures and set result on
         future accordingly'''
         id_num = response['id']
         if id_num in self.future_dict:
-            request_json, request_future = self.future_dict[id_num]
+            request_future = self.future_dict[id_num]
             request_future.set_result(response['result'])
         else:
             raise(InternalError('Received RPC response with an invalid ID'))
+
+        print("Finished process_response..")
+        return response, None #not much use for this just yet
 
 
