@@ -40,7 +40,7 @@ class JsonRPCABC():
         if params_to_use:
             request_dict['params'] = params_to_use
 
-        return json.dumps(request_dict)
+        return json.dumps(request_dict), id_to_use
 
     @staticmethod
     def response_result(id_num:int, result):
@@ -100,7 +100,7 @@ class JsonRPCABC():
             client
         '''
 
-    async def process_response(self, response):
+    def process_response(self, response):
         '''Received JSON indicates a response object. A server would not need to
         cater for this function. A client would need to implement this.
         There is a possibility that an implementation of this class could
@@ -149,7 +149,14 @@ class JsonRPCABC():
             if 'id' not in result:
                 i = InvalidRequestError('Missing ID in result')
                 return self.response_error(i)
+            if 'error' in result:
+                i = InvalidRequestError(
+                        'Result contains a result and an error field')
+                return self.response_error(i)
 
             return await self.process_response(result)
+        elif 'error' in result:
+            pass
+            #TODO - finish this
 
 

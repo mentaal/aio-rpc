@@ -12,7 +12,7 @@ from aio_rpc.Exceptions import (
 def test_request_positional(json_abc):
 
     params = [1,2,3]
-    json_obj = json_abc.request('func_name', positional_params=params)
+    json_obj,id_num = json_abc.request('func_name', positional_params=params)
     request_dict = json.loads(json_obj)
     assert request_dict == { 
             'jsonrpc' : '2.0',
@@ -27,7 +27,7 @@ def test_request_parameterised(json_abc):
             'arg_1' : 1,
             'arg_2' : 2,
             'arg_3' : 3}
-    json_obj = json_abc.request('func_name', keyword_params=params)
+    json_obj,id_num = json_abc.request('func_name', keyword_params=params)
     request_dict = json.loads(json_obj)
     assert request_dict == { 
             'jsonrpc' : '2.0',
@@ -37,7 +37,7 @@ def test_request_parameterised(json_abc):
 
 def test_notification(json_abc):
     params = { 'arg_1' : 1, 'arg_2' : 2, 'arg_3' : 3}
-    json_obj = json_abc.request('func_name', id_num=5, keyword_params=params,
+    json_obj,id_num = json_abc.request('func_name', id_num=5, keyword_params=params,
             notification=True)
     request_dict = json.loads(json_obj)
     assert request_dict == { 
@@ -48,7 +48,7 @@ def test_notification(json_abc):
 
 def test_request_no_params(json_abc):
 
-    json_obj = json_abc.request('func_name', id_num=0)
+    json_obj,id_num = json_abc.request('func_name', id_num=0)
     request_dict = json.loads(json_obj)
     assert request_dict == { 
             'jsonrpc' : '2.0',
@@ -61,7 +61,7 @@ def test_request_id(json_abc):
             'arg_1' : 1,
             'arg_2' : 2,
             'arg_3' : 3}
-    json_obj = json_abc.request('func_name', id_num=5, keyword_params=params)
+    json_obj,id_num = json_abc.request('func_name', id_num=5, keyword_params=params)
     request_dict = json.loads(json_obj)
     assert request_dict == { 
             'jsonrpc' : '2.0',
@@ -140,7 +140,7 @@ async def test_process_incoming_parse_error(json_abc):
 @pytest.mark.asyncio
 async def test_process_incoming_invalid_request(json_abc):
 
-    request = json_abc.request('1_req', positional_params=[1,2,3], id_num=4)
+    request,id_num = json_abc.request('1_req', positional_params=[1,2,3], id_num=4)
 
     r = await json_abc.process_incoming(request)
     expected_e = InvalidRequestError(
