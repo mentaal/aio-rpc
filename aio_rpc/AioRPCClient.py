@@ -35,44 +35,59 @@ class AioRPCClient():
 
             async with session.ws_connect('http://localhost:8080/ws') as ws:
 
-                #while True:
-                request_json = await self.q.get()
-                ws.send_str(request_json)
+                while True:
+                    request_json = await self.q.get()
+                    ws.send_str(request_json)
 
-                msg = await ws.receive()
-                if msg.tp == aiohttp.MsgType.text:
-                    r = await self.json_client.process_incoming(msg.data)
-                #elif msg.tp == aiohttp.MsgType.closed:
-                #    break
+                    msg = await ws.receive()
+                    if msg.tp == aiohttp.MsgType.text:
+                        r = await self.json_client.process_incoming(msg.data)
+                    elif msg.tp == aiohttp.MsgType.closed:
+                        break
+                    elif msg.tp == aiohttp.MsgType.error:
+                        break
 
-                #elif msg.tp == aiohttp.MsgType.error:
-                #    break
-                await ws.close()
+    def run(self, coro):
+        #self.event_loop.run_forever()
+        loop = self.event_loop
+        task = asyncio.ensure_future(coro(self.client_obj), loop=loop)
+        loop.run_until_complete(task)
+        for task in asyncio.Task.all_tasks(loop=loop):
+            task.cancel()
+        #loop.run_until_complete()
+        loop.stop()
 
-    def run(self):
-        self.event_loop.run_forever()
-        self.event_loop.close()
+        
+        print("closing loop...")
+        loop.close()
 
-    def add_coroutine(self, coroutine):
-        l = self.event_loop
-        asyncio.ensure_future(coroutine(self.client_obj, l), loop=l)
+    #def add_coroutine(self, coroutine):
+    #    l = self.event_loop
 
-
-
+    #    asyncio.ensure_future(coroutine(self.client_obj, l), loop=l)
 
 
 
-async def test_rpc(obj, event_loop):
-    r = await obj.add(1,2)
-    print('Result: {}'.format(r))
-    event_loop.stop()
+
+
+
+async def test_rpc(obj):
+    for i in range(100):
+        r = await obj.add(i,2)
+        print('Result: {}'.format(r))
+    #for task in asyncio.Task.all_tasks(event_loop):
+    #    if task == asyncio.Task.current_task():
+    #        continue
+    #    print("cancelling task: {}".format(task))
+    #    task.cancel()
+    #event_loop.stop()
 
 
 if __name__ == '__main__':
 
     client = AioRPCClient()
-    client.add_coroutine(test_rpc)
-    client.run()
+    #client.add_coroutine(test_rpc)
+    client.run(test_rpc)
 
 
 
