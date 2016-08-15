@@ -2,9 +2,7 @@ import aiohttp
 import asyncio
 from .AioJsonClient import AioJsonClient
 from .ClientObj import ClientObj
-
-import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+from .Exceptions import NotFoundError
 
 jar = aiohttp.CookieJar(unsafe=True)
 
@@ -28,11 +26,12 @@ class AioRPCClient():
         async with aiohttp.ClientSession(cookie_jar=jar) as session:
             async with session.get('http://localhost:8080/') as resp:
                 #print(resp.status)
-                print(await resp.text())
-                #print(session.cookies)
+                #print(await resp.text())
+                print(session.cookies)
                 #cookie = session.cookies
                 #print(jar._cookies)
 
+            print('cookies: ', session.cookies)
             async with session.ws_connect('http://localhost:8080/ws') as ws:
 
                 while True:
@@ -65,30 +64,4 @@ class AioRPCClient():
     #    l = self.event_loop
 
     #    asyncio.ensure_future(coroutine(self.client_obj, l), loop=l)
-
-
-
-
-
-
-async def test_rpc(obj):
-    for i in range(100):
-        r = await obj.add(i,2)
-        print('Result: {}'.format(r))
-    #for task in asyncio.Task.all_tasks(event_loop):
-    #    if task == asyncio.Task.current_task():
-    #        continue
-    #    print("cancelling task: {}".format(task))
-    #    task.cancel()
-    #event_loop.stop()
-
-
-if __name__ == '__main__':
-
-    client = AioRPCClient()
-    #client.add_coroutine(test_rpc)
-    client.run(test_rpc)
-
-
-
 

@@ -7,8 +7,6 @@ from aiohttp_session import setup, get_session, SimpleCookieStorage
 from .AioJsonSrv import AioJsonSrv
 from .Wrapper import Wrapper
 
-import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class AioRPCServ():
     '''The Server class which will serv up an object using RPC and
@@ -89,11 +87,3 @@ class AioRPCServ():
         event_loop.run_until_complete(srv)
         event_loop.run_forever()
 
-
-
-
-if __name__ == '__main__':
-    from tests.test_classes.blocking_class import Blocking
-
-    srv = AioRPCServ(Blocking, 0.8)
-    srv.run()
