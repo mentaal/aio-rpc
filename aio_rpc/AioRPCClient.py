@@ -5,8 +5,6 @@ from .ClientObj import ClientObj
 from .Exceptions import NotFoundError
 import logging
 
-jar = aiohttp.CookieJar(unsafe=True)
-conn = aiohttp.TCPConnector(verify_ssl=False)
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +14,8 @@ class AioRPCClient():
     def __init__(self):
 
         event_loop = asyncio.get_event_loop()
+        self.jar = aiohttp.CookieJar(unsafe=True, loop=event_loop)
+        self.conn = aiohttp.TCPConnector(verify_ssl=False, loop=event_loop)
         future_dict = {}
         q = asyncio.Queue(maxsize=5, loop=event_loop)
         json_client = AioJsonClient( event_loop=event_loop, future_dict=future_dict)
@@ -27,7 +27,10 @@ class AioRPCClient():
         asyncio.ensure_future(self.issue_requests(), loop=event_loop)
 
     async def issue_requests(self):
-        async with aiohttp.ClientSession(cookie_jar=jar, connector=conn) as session:
+        async with aiohttp.ClientSession(
+                    cookie_jar=self.jar,
+                    connector=self.conn,
+                    loop=self.event_loop) as session:
             async with session.get('https://localhost:8080/') as resp:
                 #logger.debug(resp.status)
                 logger.debug(await resp.text())
