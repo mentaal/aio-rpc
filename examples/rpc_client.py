@@ -6,7 +6,7 @@ from aio_rpc.Exceptions import NotFoundError
 import time
 
 import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+#signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 async def test_rpc(obj):
     for i in range(100):

@@ -76,8 +76,8 @@ class AioRPCClient():
             task.cancel()
         #loop.run_until_complete()
         loop.stop()
-        logger.debug("closing loop...")
-        loop.close()
+        #logger.debug("closing loop...")
+        #loop.close()
 
     #def add_coroutine(self, coroutine):
     #    l = self.event_loop

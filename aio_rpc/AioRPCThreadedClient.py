@@ -7,14 +7,14 @@ from .AioRPCClient import AioRPCClient
 from functools import partial
 import threading
 import signal
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+#signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 def worker_thread(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
     #print("loop stopped..")
     #print("closing loop...")
-    loop.close()
+    #loop.close()
 
 async def cancel_tasks(loop):
     #print("stopping client")
@@ -36,6 +36,8 @@ class AioRPCThreadedClient():
     def start_client(self):
         client = AioRPCClient()
         self._event_loop = client.event_loop
+        #if self.event_loop.is_running():
+        #    self.event_loop.stop()
         self._thread = threading.Thread(
             target=worker_thread, args=(self._event_loop,))
         self._thread.start()
