@@ -3,8 +3,12 @@ import asyncio
 from .AioJsonClient import AioJsonClient
 from .ClientObj import ClientObj
 from .Exceptions import NotFoundError
+import logging
 
 jar = aiohttp.CookieJar(unsafe=True)
+conn = aiohttp.TCPConnector(verify_ssl=False)
+
+logger = logging.getLogger(__name__)
 
 class AioRPCClient():
     '''python RPC client, partnered for AioRPCServ'''
@@ -23,16 +27,32 @@ class AioRPCClient():
         asyncio.ensure_future(self.issue_requests(), loop=event_loop)
 
     async def issue_requests(self):
-        async with aiohttp.ClientSession(cookie_jar=jar) as session:
-            async with session.get('http://localhost:8080/') as resp:
-                #print(resp.status)
-                #print(await resp.text())
-                print(session.cookies)
-                #cookie = session.cookies
-                #print(jar._cookies)
+        async with aiohttp.ClientSession(cookie_jar=jar, connector=conn) as session:
+            async with session.get('https://localhost:8080/') as resp:
+                #logger.debug(resp.status)
+                logger.debug(await resp.text())
+            for i in range(10):
+                async with session.get('https://localhost:8080/get_access') as resp:
+                    r = await resp.text()
+                    if r == 'Resource granted':
+                        logger.debug("resource was granted. continuing")
+                        break
+                    else:
+                        logger.debug("Resource is busy, perhaps try again in a while?")
+            else:
+                logger.debug("Resource is still busy... giving up!")
+                for task in asyncio.Task.all_tasks(loop=self.event_loop):
+                    if task == asyncio.Task.current_task(loop=self.event_loop):
+                        logger.debug("skipping current task..")
+                        continue
+                    logger.debug("killing task: {}".format(task))
+                    task.cancel()
+                #self.event_loop.stop()
+                logger.debug("returning..")
+                return
 
-            print('cookies: ', session.cookies)
-            async with session.ws_connect('http://localhost:8080/ws') as ws:
+            logger.debug("connecting via wss...")
+            async with session.ws_connect('wss://localhost:8080/wss', timeout=2) as ws:
 
                 while True:
                     request_json = await self.q.get()
@@ -51,13 +71,12 @@ class AioRPCClient():
         loop = self.event_loop
         task = asyncio.ensure_future(coro(self.client_obj), loop=loop)
         loop.run_until_complete(task)
+        logger.debug("cancelling remaining tasks..")
         for task in asyncio.Task.all_tasks(loop=loop):
             task.cancel()
         #loop.run_until_complete()
         loop.stop()
-
-        
-        print("closing loop...")
+        logger.debug("closing loop...")
         loop.close()
 
     #def add_coroutine(self, coroutine):
