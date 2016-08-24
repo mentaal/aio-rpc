@@ -26,6 +26,17 @@ class AioRPCClient():
         self.event_loop = event_loop
         asyncio.ensure_future(self.issue_requests(), loop=event_loop)
 
+    async def shutdown(self):
+        '''run all tasks to completion'''
+        me = asyncio.Task.current_task()
+        for task in asyncio.Task.all_tasks():
+            if task == me:
+                continue
+            task.cancel()
+            await asyncio.wait([task])
+
+
+
     async def issue_requests(self):
         async with aiohttp.ClientSession(
                     cookie_jar=self.jar,
@@ -74,16 +85,6 @@ class AioRPCClient():
         loop = self.event_loop
         task = asyncio.ensure_future(coro(self.client_obj), loop=loop)
         loop.run_until_complete(task)
-        logger.debug("cancelling remaining tasks..")
-        for task in asyncio.Task.all_tasks(loop=loop):
-            task.cancel()
-        #loop.run_until_complete()
+        loop.run_until_complete(self.shutdown())
         loop.stop()
-        #logger.debug("closing loop...")
-        #loop.close()
-
-    #def add_coroutine(self, coroutine):
-    #    l = self.event_loop
-
-    #    asyncio.ensure_future(coroutine(self.client_obj, l), loop=l)
 

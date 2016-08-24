@@ -4,9 +4,11 @@ from aio_rpc.AioRPCClient import AioRPCClient
 from aio_rpc.ClientObj import ClientObj
 from aio_rpc.Exceptions import NotFoundError
 import time
+import logging
 
 import signal
-#signal.signal(signal.SIGINT, signal.SIG_DFL)
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+#logger = logging.basicConfig(level=logging.DEBUG)
 
 async def test_rpc(obj):
     for i in range(100):

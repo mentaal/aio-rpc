@@ -66,8 +66,6 @@ class AioRPCServ():
             await asyncio.sleep(1)
 
 
-
-
     async def root_handler(self, request):
         session = await get_session(request)
         last_visit = session.get('last_visit', 'Never')
