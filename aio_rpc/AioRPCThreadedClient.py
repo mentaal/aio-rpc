@@ -9,11 +9,13 @@ import threading
 import signal
 from time import sleep
 #signal.signal(signal.SIGINT, signal.SIG_DFL)
+import logging
+logger = logging.getLogger(__name__)
 
 def worker_thread(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
-    print("worker_thread: loop stopped..")
+    logger.debug("worker_thread: loop stopped..")
     #print("closing loop...")
     #loop.close()
 
@@ -32,11 +34,33 @@ async def cancel_tasks(loop):
 class AioRPCThreadedClient():
     '''instantiate RPC client in another thread'''
 
-    def __init__(self):
+    def __init__(self, *,
+        host_addr='0.0.0.0',
+        port=8080,
+        timeout=2,
+        secure=True
+            ):
+        '''initialize threaded rpc client.
+        Args:
+            host_addr (str): the address to connect to
+            port (int): the port number to connect to
+            timeout (int):the time after which the client gives up connecting to
+            the server
+            secure (bool): To connect via https or http
+        '''
+        self.host_addr = host_addr
+        self.port = port
+        self.timeout = timeout
+        self.secure = secure
+        print('using secure: {}'.format(self.secure))
         self._start_client()
 
     def _start_client(self):
-        client = AioRPCClient()
+        client = AioRPCClient(
+                host_addr=self.host_addr,
+                port=self.port,
+                timeout=self.timeout,
+                secure=self.secure)
         self._event_loop = client.event_loop
         #if self.event_loop.is_running():
         #    self.event_loop.stop()

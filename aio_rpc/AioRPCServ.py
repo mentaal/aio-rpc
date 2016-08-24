@@ -21,16 +21,20 @@ class AioRPCServ():
             class_to_instantiate=None,
             obj=None,
             timeout=5,
+            watchdog_timeout=2,
             host_addr='0.0.0.0',
             port=8080,
             secure=True,
             cert='cert.pem'
+
             ):
         '''
         Args:
             class_to_instantiate (class): the class of the object to instantiate
             timeout (int): The time after which an exception is raised if the
             method being served doesn't complete
+            watchdog_timeout (int): the time in seconds after which the server 
+            frees up the object being served to another client
             obj (object): The object to serve. Can use this or the class to
             instantiate
             host_addr (str): the address to serve on
@@ -51,6 +55,7 @@ class AioRPCServ():
         self.port = port
         self.secure = secure
         self.cert = cert
+        self.watchdog_timeout = watchdog_timeout
 
 
         self.event_loop = event_loop
@@ -71,7 +76,7 @@ class AioRPCServ():
             session['authenticated'] = self.locked
             message = 'Resource granted'
             session['resource_granted'] = self.locked
-            self.end_time = self.event_loop.time()+5
+            self.end_time = self.event_loop.time()+self.watchdog_timeout
         return web.Response(body=message.encode('utf-8'))
 
     async def watch_dog(self):
