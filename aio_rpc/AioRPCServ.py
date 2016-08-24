@@ -17,19 +17,41 @@ class AioRPCServ():
     '''The Server class which will serv up an object using RPC and
     WebSockets.'''
 
-    def __init__(self, class_to_instantiate, timeout):
+    def __init__(self, *, 
+            class_to_instantiate=None,
+            obj=None,
+            timeout=5,
+            host_addr='0.0.0.0',
+            port=8080,
+            secure=True,
+            cert='cert.pem'
+            ):
         '''
         Args:
             class_to_instantiate (class): the class of the object to instantiate
             timeout (int): The time after which an exception is raised if the
             method being served doesn't complete
+            obj (object): The object to serve. Can use this or the class to
+            instantiate
+            host_addr (str): the address to serve on
+            port (int): the port number to serve on
+            cert (file_path): the path to the ssl certificate to use
         '''
 
         event_loop = asyncio.get_event_loop()
 
-        obj = Wrapper(cls=class_to_instantiate, cls_args=None, loop=event_loop,
-                timeout = timeout)
+        if class_to_instantiate is not None:
+            obj = Wrapper(cls=class_to_instantiate, cls_args=None, loop=event_loop,
+                    timeout = timeout)
+        if obj is None:
+            raise Exception("Need a value for either class_to_instantiate or obj")
         self.json_srv = AioJsonSrv(obj=obj)
+
+        self.host_addr = host_addr
+        self.port = port
+        self.secure = secure
+        self.cert = cert
+
 
         self.event_loop = event_loop
         self.locked = False
@@ -133,13 +155,21 @@ class AioRPCServ():
         return ws
 
     def run(self):
-        sslcontext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        sslcontext.load_cert_chain('cert.pem')
         event_loop = self.event_loop
         app = web.Application(loop=event_loop)
         #setup(app, SimpleCookieStorage())
         setup(app, EncryptedCookieStorage(b'Thirty  two  length  bytes  key.'))
         app.router.add_route('GET', '/', self.root_handler)
-        app.router.add_route('GET', '/wss', self.ws_handler)
+        if self.secure:
+            path = '/wss'
+        else:
+            path = '/ws'
+        app.router.add_route('GET', path, self.ws_handler)
         app.router.add_route('GET', '/get_access', self.get_access)
-        web.run_app(app, host='0.0.0.0', port=8080, ssl_context=sslcontext)
+        if self.secure:
+            print("Using ssl cert: {}".format(self.cert))
+            sslcontext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            sslcontext.load_cert_chain(self.cert)
+            web.run_app(app, host=self.host_addr, port=self.port, ssl_context=sslcontext)
+        else:
+            web.run_app(app, host=self.host_addr, port=self.port)

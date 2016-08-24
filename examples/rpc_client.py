@@ -25,7 +25,7 @@ async def test_rpc(obj):
 
 if __name__ == '__main__':
 
-    client = AioRPCClient()
+    client = AioRPCClient(secure=False)
     #client.add_coroutine(test_rpc)
     client.run(test_rpc)
 

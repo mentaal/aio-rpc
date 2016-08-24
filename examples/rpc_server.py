@@ -7,6 +7,6 @@ import logging
 if __name__ == '__main__':
     from tests.test_classes.blocking_class import Blocking
 
-    srv = AioRPCServ(Blocking, 0.8)
+    srv = AioRPCServ(class_to_instantiate=Blocking, timeout=0.8, secure=False)
     srv.run()
 
