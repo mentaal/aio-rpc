@@ -23,4 +23,4 @@ the server's setup.
 
 
 ## Examples
-Exampple server and client can be seen within the examples directory.
+Example server and client can be seen within the examples directory.

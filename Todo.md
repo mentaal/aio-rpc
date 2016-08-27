@@ -1,15 +1,10 @@
 # TODO
 
-## JSON
-
-1)  Check if I need an escaping mechanism for method names to comply with spec
-    which states that method names cannot begin with 'rpc' this could be
-    implemented as a subclass of Wrapper for example, rpcxxx could become
-    _rpcxxx
+1)  Look into possibly serving up a number of instances of a class. Delegate
+    access to a number of resources
 
 2)  Handle Batch requests
 
-## Websockets
+3)  Sort out approach to user login
 
-Lots of things!
 
