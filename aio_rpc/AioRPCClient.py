@@ -15,6 +15,9 @@ class AioRPCClient():
             host_addr='0.0.0.0',
             port=8080,
             timeout=2,
+            retry_wait_time = 5,
+            retry_attempts = 10,
+            credentials,
             secure = True
             ):
         '''initialize rpc client.
@@ -23,6 +26,9 @@ class AioRPCClient():
             port (int): the port number to connect to
             timeout (int):the time after which the client gives up connecting to
             the server
+            retry_wait_time (int): the time between retrying server for resource if
+            it's busy. 
+            retry_attempts (int): the amount of times to retry the server
             secure (bool): To connect via https or http
         '''
 
@@ -45,6 +51,8 @@ class AioRPCClient():
         self.port = port
         self.secure = secure
         self.timeout = timeout
+        self.retry_attempts = retry_attempts
+        self.retry_wait_time = retry_wait_time
 
     async def shutdown(self):
         '''run all tasks to completion'''
@@ -65,6 +73,7 @@ class AioRPCClient():
         if use_ws:
             protocol = ws
         url =  '{}://{}:{}/{}'.format(protocol, self.host_addr, self.port, path)
+        print("url: {}".format(url))
         return url
 
 
@@ -76,7 +85,15 @@ class AioRPCClient():
             async with session.get(self.make_url()) as resp:
                 #logger.debug(resp.status)
                 logger.debug(await resp.text())
-            for i in range(10):
+            async with session.get(self.make_url('login')) as resp:
+                r = await resp.text()
+                print(r)
+                if r != 'logged in':
+                    print("login error! shutting down..")
+                    await self.shutdown()
+                    return
+
+            for i in range(self.retry_attempts):
                 async with session.get(self.make_url('get_access')) as resp:
                     r = await resp.text()
                     if r == 'Resource granted':
@@ -84,6 +101,7 @@ class AioRPCClient():
                         break
                     else:
                         logger.debug("Resource is busy, perhaps try again in a while?")
+                        await asyncio.sleep(self.retry_wait_time)
             else:
                 logger.debug("Resource is still busy... giving up!")
                 for task in asyncio.Task.all_tasks(loop=self.event_loop):

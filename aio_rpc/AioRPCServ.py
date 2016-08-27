@@ -1,7 +1,7 @@
 import asyncio
 import time
 import aiohttp
-from aiohttp import web
+from aiohttp import web, BasicAuth
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_session import setup, get_session, SimpleCookieStorage
 from .AioJsonSrv import AioJsonSrv
@@ -25,7 +25,8 @@ class AioRPCServ():
             host_addr='0.0.0.0',
             port=8080,
             secure=True,
-            cert='cert.pem'
+            cert='cert.pem',
+            credentials
 
             ):
         '''
@@ -56,6 +57,7 @@ class AioRPCServ():
         self.secure = secure
         self.cert = cert
         self.watchdog_timeout = watchdog_timeout
+        self.credentials = credentials
 
 
         self.event_loop = event_loop
@@ -82,14 +84,14 @@ class AioRPCServ():
     async def watch_dog(self):
         '''used to remove the token after 10 seconds of inactivity'''
         while(True):
-            logger.debug("woof:end_time: {}".format(self.end_time))
+            #logger.debug("woof:end_time: {}".format(self.end_time))
             if self.end_time is not None:
                 if self.event_loop.time() >= self.end_time:
                     #release the lock
                     logger.debug("releasing the lock due to timeout..")
                     self.locked = False
                     self.end_time = None
-            logger.debug(self.locked)
+            #logger.debug(self.locked)
             await asyncio.sleep(1)
 
 
@@ -159,6 +161,20 @@ class AioRPCServ():
 
         return ws
 
+    async def authenticate(self, request):
+        session = await get_session(request)
+        auth_request = session.get('auth', None)
+        if auth_request is not None:
+            try:
+                creds = BasicAuth.decode(auth_request)
+                if creds.password == credentials.get(creds.login, ''):
+                    session['authenticated'] = 'True:{}'.format(creds.login)
+                    return web.Response(body='logged in'.encode('utf-8'))
+            except ValueError as e:
+                pass
+        return web.Response(body='login error'.encode('utf-8'))
+
+
     def run(self):
         event_loop = self.event_loop
         app = web.Application(loop=event_loop)
@@ -171,6 +187,7 @@ class AioRPCServ():
             path = '/ws'
         app.router.add_route('GET', path, self.ws_handler)
         app.router.add_route('GET', '/get_access', self.get_access)
+        app.router.add_route('GET', '/login', self.authenticate)
         if self.secure:
             print("Using ssl cert: {}".format(self.cert))
             sslcontext = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
