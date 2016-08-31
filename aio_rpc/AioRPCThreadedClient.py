@@ -10,7 +10,8 @@ import signal
 from time import sleep
 #signal.signal(signal.SIGINT, signal.SIG_DFL)
 import logging
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
+logger = logging.basicConfig(level=logging.DEBUG)
 
 def worker_thread(loop):
     asyncio.set_event_loop(loop)
@@ -38,7 +39,9 @@ class AioRPCThreadedClient():
         host_addr='0.0.0.0',
         port=8080,
         timeout=2,
-        secure=True
+        secure=True,
+        login,
+        pw
             ):
         '''initialize threaded rpc client.
         Args:
@@ -52,15 +55,20 @@ class AioRPCThreadedClient():
         self.port = port
         self.timeout = timeout
         self.secure = secure
+        self.login = login
+        self.pw = pw
         print('using secure: {}'.format(self.secure))
         self._start_client()
 
     def _start_client(self):
         client = AioRPCClient(
-                host_addr=self.host_addr,
-                port=self.port,
-                timeout=self.timeout,
-                secure=self.secure)
+                host_addr= self.host_addr,
+                port     = self.port,
+                timeout  = self.timeout,
+                secure   = self.secure,
+                login    = self.login,
+                pw       = self.pw
+                )
         self._event_loop = client.event_loop
         #if self.event_loop.is_running():
         #    self.event_loop.stop()

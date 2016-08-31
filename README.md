@@ -14,6 +14,16 @@ Server can host using either http or https protocols.
 Server expects client to login and obtain exclusive access to the object being
 served.
 
+### Certificate
+To generate a self signed certificate using openssl, you can do so with the
+following command:
+
+```DOS .bat
+openssl req -x509 -newkey rsa:4096 -out cert.pem -keyout cert.pem -nodes
+```
+
+
+
 
 ## Client 
 Client needs to login at: '/login'

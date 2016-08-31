@@ -57,6 +57,7 @@ class AioRPCClient():
         self.retry_attempts = retry_attempts
         self.retry_wait_time = retry_wait_time
 
+        logger.debug("Using login: {}, password: {}".format(login,pw))
         self.login_details = BasicAuth(login=login,password=pw)
 
     async def shutdown(self):

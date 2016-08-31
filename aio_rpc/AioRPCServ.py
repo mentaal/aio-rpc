@@ -6,6 +6,7 @@ from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_session import setup, get_session, SimpleCookieStorage
 from .AioJsonSrv import AioJsonSrv
 from .Wrapper import Wrapper
+from .ObjectWrapper import ObjectWrapper
 import ssl
 import logging
 import uuid
@@ -50,6 +51,8 @@ class AioRPCServ():
                     timeout = timeout)
         if obj is None:
             raise Exception("Need a value for either class_to_instantiate or obj")
+        else:
+            obj = ObjectWrapper(obj=obj, loop=event_loop, timeout= timeout)
         self.json_srv = AioJsonSrv(obj=obj)
 
         self.host_addr = host_addr
