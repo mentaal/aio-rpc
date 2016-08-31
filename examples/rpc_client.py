@@ -5,11 +5,10 @@ from aio_rpc.ClientObj import ClientObj
 from aio_rpc.Exceptions import NotFoundError
 import time
 import logging
-from credentials import credentials
 
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-logger = logging.basicConfig(level=logging.DEBUG)
+#logger = logging.basicConfig(level=logging.DEBUG)
 
 async def test_rpc(obj):
     for i in range(100):
@@ -26,7 +25,7 @@ async def test_rpc(obj):
 
 if __name__ == '__main__':
 
-    client = AioRPCClient(secure=False, credentials=credentials)
+    client = AioRPCClient(secure=False, login='default', pw='123456')
     #client.add_coroutine(test_rpc)
     client.run(test_rpc)
 

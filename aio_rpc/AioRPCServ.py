@@ -21,7 +21,7 @@ class AioRPCServ():
             class_to_instantiate=None,
             obj=None,
             timeout=5,
-            watchdog_timeout=2,
+            watchdog_timeout=5,
             host_addr='0.0.0.0',
             port=8080,
             secure=True,
@@ -66,6 +66,9 @@ class AioRPCServ():
         asyncio.ensure_future(self.watch_dog(), loop=event_loop)
         self.end_time=None
 
+    def kick_the_dog(self):
+        self.end_time = self.event_loop.time()+self.watchdog_timeout
+
     async def get_access(self, request):
         session = await get_session(request)
         if self.locked:
@@ -78,7 +81,10 @@ class AioRPCServ():
             session['authenticated'] = self.locked
             message = 'Resource granted'
             session['resource_granted'] = self.locked
-            self.end_time = self.event_loop.time()+self.watchdog_timeout
+            logger.debug("watchdog_timeout: {}".format(self.watchdog_timeout))
+            logger.debug("event_loop.time: {}".format(self.event_loop.time()))
+            self.kick_the_dog()
+            logger.debug("end_time: {}".format(self.end_time))
         return web.Response(body=message.encode('utf-8'))
 
     async def watch_dog(self):
@@ -87,6 +93,8 @@ class AioRPCServ():
             #logger.debug("woof:end_time: {}".format(self.end_time))
             if self.end_time is not None:
                 if self.event_loop.time() >= self.end_time:
+                    logger.debug("event_loop.time(): {}".format(self.event_loop.time()))
+                    logger.debug("end_time: {}".format(self.end_time))
                     #release the lock
                     logger.debug("releasing the lock due to timeout..")
                     self.locked = False
@@ -134,7 +142,7 @@ class AioRPCServ():
 
 
         async for msg in ws:
-            self.end_time = self.event_loop.time()+5
+            self.kick_the_dog()
             logger.debug("received msg: {}".format(msg.data))
             if self.locked == False:
                 logger.debug('Timed Out waiting for client..')
@@ -153,21 +161,24 @@ class AioRPCServ():
                 ws.send_str(result_json)
             elif msg.tp == aiohttp.MsgType.error:
                 logger.debug('ws connection closed with exception %s' % ws.exception())
-            self.end_time = self.event_loop.time()
+            self.kick_the_dog()
 
         logger.debug("Unlocking device..")
         self.locked = False
+        self.end_time = None
         logger.debug('websocket connection closed')
 
         return ws
 
     async def authenticate(self, request):
         session = await get_session(request)
-        auth_request = session.get('auth', None)
+        auth_request = request.headers.get('AUTHORIZATION', None)
+        logger.debug('authentication: {}'.format(auth_request))
         if auth_request is not None:
             try:
                 creds = BasicAuth.decode(auth_request)
-                if creds.password == credentials.get(creds.login, ''):
+                if creds.password == self.credentials.get(creds.login, ''):
+                    logger.debug('Authenticated user: {}'.format(creds.login))
                     session['authenticated'] = 'True:{}'.format(creds.login)
                     return web.Response(body='logged in'.encode('utf-8'))
             except ValueError as e:

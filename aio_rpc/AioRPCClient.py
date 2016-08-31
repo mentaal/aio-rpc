@@ -1,4 +1,5 @@
 import aiohttp
+from aiohttp import BasicAuth
 import asyncio
 from .AioJsonClient import AioJsonClient
 from .ClientObj import ClientObj
@@ -12,12 +13,14 @@ class AioRPCClient():
     '''python RPC client, partnered for AioRPCServ'''
 
     def __init__(self, *,
-            host_addr='0.0.0.0',
+            #host_addr='0.0.0.0',
+            host_addr='localhost',
             port=8080,
             timeout=2,
             retry_wait_time = 5,
             retry_attempts = 10,
-            credentials,
+            login='default',
+            pw='123456',
             secure = True
             ):
         '''initialize rpc client.
@@ -54,6 +57,8 @@ class AioRPCClient():
         self.retry_attempts = retry_attempts
         self.retry_wait_time = retry_wait_time
 
+        self.login_details = BasicAuth(login=login,password=pw)
+
     async def shutdown(self):
         '''run all tasks to completion'''
         me = asyncio.Task.current_task()
@@ -73,7 +78,7 @@ class AioRPCClient():
         if use_ws:
             protocol = ws
         url =  '{}://{}:{}/{}'.format(protocol, self.host_addr, self.port, path)
-        print("url: {}".format(url))
+        logging.debug("url: {}".format(url))
         return url
 
 
@@ -82,12 +87,14 @@ class AioRPCClient():
                     cookie_jar=self.jar,
                     connector=self.conn,
                     loop=self.event_loop) as session:
-            async with session.get(self.make_url()) as resp:
-                #logger.debug(resp.status)
-                logger.debug(await resp.text())
-            async with session.get(self.make_url('login')) as resp:
+            #async with session.get(self.make_url()) as resp:
+            #    #logger.debug(resp.status)
+            #    logger.debug(await resp.text())
+            async with session.get(
+                self.make_url('login'),
+                auth=self.login_details) as resp:
                 r = await resp.text()
-                print(r)
+                #print(r)
                 if r != 'logged in':
                     print("login error! shutting down..")
                     await self.shutdown()

@@ -1,3 +1,3 @@
 credentials = {
-        'gkuhn' : '123456'
+        'default' : '123456'
         }
