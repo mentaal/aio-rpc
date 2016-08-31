@@ -11,6 +11,8 @@ class Blocking():
     def add(self, num1, num2):
         #print("Blocking for {} seconds".format(num))
         return num1+num2
+    def add_arrays(self, a1, a2):
+        return [a+b for (a,b) in zip(a1,a2)]
 
     def raise_exception(self):
         return 1/0

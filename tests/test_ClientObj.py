@@ -16,6 +16,13 @@ async def test_caller_srv(client_srv_answerer):
     assert r == 3
 
 @pytest.mark.asyncio
+async def test_caller_srv(client_srv_answerer):
+    a = bytearray(range(20))
+    b = bytearray(range(30,50))
+    r = await client_srv_answerer.add_arrays(a,b)
+    assert r == [a1+b1 for (a1,b1) in zip(a,b)]
+
+@pytest.mark.asyncio
 async def test_caller_srv_bad(client_srv_answerer):
     with pytest.raises(NotFoundError):
         r = await client_srv_answerer.add_bad(1,2)

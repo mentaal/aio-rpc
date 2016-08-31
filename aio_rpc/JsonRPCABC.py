@@ -8,6 +8,7 @@ from .Exceptions import (
         InternalError,
         UnimplementedError,
         exceptions_from_codes)
+from .custom_json import from_json,to_json
 
 class JsonRPCABC():
     '''Abstract Base Class defining generic functions relating to JSON-RPC 2.0.
@@ -42,7 +43,7 @@ class JsonRPCABC():
         if params_to_use:
             request_dict['params'] = params_to_use
 
-        return json.dumps(request_dict), id_to_use
+        return json.dumps(request_dict, default=to_json), id_to_use
 
     @staticmethod
     def response_result(id_num:int, result):
@@ -59,7 +60,7 @@ class JsonRPCABC():
                 'result'  : result,
                 'id'      : id_num
                         }
-        return json.dumps(response_dict)
+        return json.dumps(response_dict, default=to_json)
 
     @staticmethod
     def response_error(exception, id_num='null'):
@@ -76,7 +77,7 @@ class JsonRPCABC():
                 'error'   : exception.to_json_rpc_dict(),
                 'id'      : id_num
                         }
-        return json.dumps(response_dict)
+        return json.dumps(response_dict, default=to_json)
 
     async def process_request(self, request):
         '''Received JSON indicates a request object. A server would need to
@@ -136,7 +137,7 @@ class JsonRPCABC():
         sent to the sender in a jsonified string.'''
 
         try:
-            result = json.loads(json_obj)
+            result = json.loads(json_obj, object_hook=from_json)
         except ValueError as e:
             p = ParseError(e.__str__())
             return self.response_error(p), p
